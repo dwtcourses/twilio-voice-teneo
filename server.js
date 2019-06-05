@@ -139,10 +139,10 @@ var server = http
           } else {
             console.log("Custom vocab: " + teneoResponse.output.parameters.twilio_customVocabulary);
             response = twiml.gather({
-              language: language_STT,
+              language: "en-ZA",
               hints: customVocabulary,
               action: WEBHOOK_FOR_TWILIO,
-              input: "dtmf speech",
+              input: "speech dtmf",
               speechTimeout: customTimeout
             });
 
