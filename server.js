@@ -3,6 +3,8 @@ const chalk = require("chalk");
 const qs = require("querystring");
 const VoiceResponse = require("twilio").twiml.VoiceResponse;
 const TIE = require("@artificialsolutions/tie-api-client");
+const Pusher = require("pusher");
+const striptags = require("striptags");
 
 const {
   TENEO_ENGINE_URL,
@@ -14,6 +16,14 @@ const {
   LANGUAGE_TTS,
   PORT
 } = process.env;
+
+const pusher = new Pusher({
+  appId: PUSHER_APPID,
+  key: PUSHER_KEY,
+  secret: PUSHER_SECRET,
+  host: PUSHER_HOST,
+  encrypted: false
+});
 const port = PORT || 1337;
 const teneoApi = TIE.init(TENEO_ENGINE_URL);
 const firstInput = FIRST_INPUT_FOR_TENEO || "";
@@ -77,6 +87,12 @@ var server = http
       var phoneNumber = post.Caller;
       var teneoSessionId = getSession(callId);
 
+      if (textToSend) {
+        pusher.trigger("ivr", "user_input", {
+          message: textToSend
+        });
+      }
+
       teneoApi
         .sendInput(teneoSessionId, { text: textToSend, channel: "twilio", phoneNumber: phoneNumber })
         .then(teneoResponse => {
@@ -103,12 +119,12 @@ var server = http
                 " to " +
                 phoneNumber +
                 " with the message " +
-                teneoResponse.output.parameters.twilio_smsText
+                striptags(teneoResponse.output.parameters.twilio_smsText)
             );
             const client = require("twilio")(accountSid, authToken);
             client.messages.create({
               from: post.Called,
-              body: teneoResponse.output.parameters.twilio_smsText,
+              body: striptags(teneoResponse.output.parameters.twilio_smsText),
               to: phoneNumber
             });
           }
@@ -135,6 +151,12 @@ var server = http
               // If the output parameter 'tts' exists, it will be used for the answer text
               textToSay = teneoResponse.output.parameters.tts;
             }
+
+            textToSay = striptags(textToSay);
+
+            pusher.trigger("ivr", "teneo_answer", {
+              message: textToSay
+            });
 
             response.say(
               {
