@@ -125,27 +125,36 @@ var server = http
                 " with the message " +
                 striptags(teneoResponse.output.parameters.twilio_smsText)
             );
+
             const client = require("twilio")(accountSid, authToken);
-            client.messages.create({
-              from: post.Called,
-              body: striptags(teneoResponse.output.parameters.twilio_smsText),
-              to: phoneNumber
-            });
+            client.messages
+              .create({
+                from: post.Called,
+                body: striptags(teneoResponse.output.parameters.twilio_smsText),
+                to: phoneNumber
+              })
+              .then(message => console.log(message.sid));
           }
 
+          response = twiml.gather({
+            language: "en-ZA",
+            hints: customVocabulary,
+            action: WEBHOOK_FOR_TWILIO,
+            input: "speech dtmf",
+            speechTimeout: 1
+          });
+
           if (teneoResponse.output.parameters.twilio_endCall == "true") {
+            response.say(
+              {
+                voice: language_TTS
+              },
+              striptags(teneoResponse.output.text)
+            );
             // If the output parameter 'twilio_endcall' exists, the call will be ended
             response = twiml.hangup();
           } else {
             console.log("Custom vocab: " + teneoResponse.output.parameters.twilio_customVocabulary);
-            response = twiml.gather({
-              language: "en-ZA",
-              hints: customVocabulary,
-              action: WEBHOOK_FOR_TWILIO,
-              input: "speech dtmf",
-              speechTimeout: 1
-            });
-
             var textToSay = teneoResponse.output.text;
             if (teneoResponse.output.parameters.twilio_customOutput)
               // If the output parameter 'twilio_customOutput' exists, read this instead of output text
