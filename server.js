@@ -172,7 +172,7 @@ var server = http
 
           console.log(chalk.yellow("Caller ID: " + callId));
           if (textToSend) console.log(chalk.green("Captured Input: " + textToSend));
-          if (teneoResponse.output.text) console.log(chalk.blue("Spoken Output: " + teneoResponse.output.text));
+          if (teneoResponse.output.text) console.log(chalk.blue("Spoken Output: " + textToSay));
 
           res.writeHead(200, { "Content-Type": "text/xml" });
           res.end(twiml.toString());
