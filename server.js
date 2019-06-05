@@ -143,7 +143,7 @@ var server = http
               hints: customVocabulary,
               action: WEBHOOK_FOR_TWILIO,
               input: "speech dtmf",
-              speechTimeout: customTimeout
+              speechTimeout: 1
             });
 
             var textToSay = teneoResponse.output.text;
