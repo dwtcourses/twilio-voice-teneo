@@ -7,6 +7,10 @@ const Pusher = require("pusher");
 const striptags = require("striptags");
 
 const {
+  PUSHER_APPID,
+  PUSHER_KEY,
+  PUSHER_SECRET,
+  PUSHER_HOST,
   TENEO_ENGINE_URL,
   WEBHOOK_FOR_TWILIO,
   ACCOUNT_SID,
