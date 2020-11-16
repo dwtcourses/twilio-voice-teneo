@@ -26,6 +26,8 @@ router.post("/", function (request, response, next) {
     url: url,
   };
 
+  console.log(`Conference options`, options);
+
   // Place an outbound call to the user, using the TwiML instructions
   // from the /outbound route
   client.calls
