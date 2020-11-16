@@ -7,7 +7,7 @@ const accountSid = process.env.ACCOUNT_SID;
 const authToken = process.env.AUTH_TOKEN;
 const client = require("twilio")(accountSid, authToken);
 
-const twilioNumber = process.env.TWILLIO_NUMBER;
+const twilioNumber = process.env.TWILIO_NUMBER;
 
 router.post("/", function (request, response, next) {
   // This should be the publicly accessible URL for your application
