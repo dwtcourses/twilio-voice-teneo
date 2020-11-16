@@ -34,8 +34,10 @@ const teneoApi = TIE.init(TENEO_ENGINE_URL);
 const firstInput = FIRST_INPUT_FOR_TENEO || "";
 const language_STT = LANGUAGE_STT || "en-GB";
 const language_TTS = LANGUAGE_TTS || "Polly.Emma";
-const accountSid = ACCOUNT_SID || ""; // Only required for SMS
-const authToken = AUTH_TOKEN || ""; // Only required for SMS
+const accountSid = ACCOUNT_SID || ""; // Only required for SMS or outbound calls
+const authToken = AUTH_TOKEN || ""; // Only required for SMS or outbound calls
+
+const client = require("twilio")(accountSid, authToken);
 
 console.log(language_STT);
 console.log(language_TTS);
