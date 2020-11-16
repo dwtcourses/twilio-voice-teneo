@@ -106,11 +106,14 @@ var server = http
 
       if (CTX_PARAMS) {
         let params = CTX_PARAMS.split(",");
+        console.log("Split params", params);
         params.forEach((elem) => {
           let pair = elem.split("=");
           requestCtx[pair[0].trim()] = pair[1].trim();
         });
       }
+
+      console.log(`Full CTX to Teneo`, requestCtx);
 
       teneoApi
         .sendInput(teneoSessionId, requestCtx)
