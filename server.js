@@ -18,7 +18,8 @@ const {
   FIRST_INPUT_FOR_TENEO,
   LANGUAGE_STT,
   LANGUAGE_TTS,
-  PORT
+  PORT,
+  CTX_PARAMS,
 } = process.env;
 
 const pusher = new Pusher({
@@ -26,7 +27,7 @@ const pusher = new Pusher({
   key: PUSHER_KEY,
   secret: PUSHER_SECRET,
   host: PUSHER_HOST,
-  encrypted: false
+  encrypted: false,
 });
 const port = PORT || 1337;
 const teneoApi = TIE.init(TENEO_ENGINE_URL);
@@ -63,11 +64,11 @@ function setSession(userId, sessionId) {
 var server = http
   .createServer((req, res) => {
     var body = "";
-    req.on("data", function(data) {
+    req.on("data", function (data) {
       body += data;
     });
 
-    req.on("end", function() {
+    req.on("end", function () {
       var post = qs.parse(body);
       var textToSend = "";
 
@@ -93,13 +94,27 @@ var server = http
 
       if (textToSend) {
         pusher.trigger("ivr", "user_input", {
-          message: textToSend
+          message: textToSend,
+        });
+      }
+
+      let requestCtx = {
+        text: textToSend,
+        channel: "twilio",
+        phoneNumber: phoneNumber,
+      };
+
+      if (CTX_PARAMS) {
+        let params = CTX_PARAMS.split(",");
+        params.forEach((elem) => {
+          let pair = elem.split("=");
+          requestCtx[pair[0].trim()] = pair[1].trim();
         });
       }
 
       teneoApi
-        .sendInput(teneoSessionId, { text: textToSend, channel: "twilio", phoneNumber: phoneNumber })
-        .then(teneoResponse => {
+        .sendInput(teneoSessionId, requestCtx)
+        .then((teneoResponse) => {
           setSession(callId, teneoResponse.sessionId);
 
           const twiml = new VoiceResponse();
@@ -107,12 +122,14 @@ var server = http
 
           var customTimeout = "auto";
           if (teneoResponse.output.parameters.twilio_customTimeout) {
-            customTimeout = teneoResponse.output.parameters.twilio_customTimeout;
+            customTimeout =
+              teneoResponse.output.parameters.twilio_customTimeout;
           }
 
           var customVocabulary = ""; // If the output parameter 'twilio_customVocabulary' exists, it will be used for custom vocabulary understanding.  This should be a comma separated list of words to recognize
           if (teneoResponse.output.parameters.twilio_customVocabulary) {
-            customVocabulary = teneoResponse.output.parameters.twilio_customVocabulary;
+            customVocabulary =
+              teneoResponse.output.parameters.twilio_customVocabulary;
           }
 
           if (teneoResponse.output.parameters.twilio_smsText) {
@@ -131,9 +148,9 @@ var server = http
               .create({
                 from: post.Called,
                 body: striptags(teneoResponse.output.parameters.twilio_smsText),
-                to: phoneNumber
+                to: phoneNumber,
               })
-              .then(message => console.log(message.sid));
+              .then((message) => console.log(message.sid));
           }
 
           response = twiml.gather({
@@ -141,20 +158,23 @@ var server = http
             hints: customVocabulary,
             action: WEBHOOK_FOR_TWILIO,
             input: "speech dtmf",
-            speechTimeout: 1
+            speechTimeout: 1,
           });
 
           if (teneoResponse.output.parameters.twilio_endCall == "true") {
             response.say(
               {
-                voice: language_TTS
+                voice: language_TTS,
               },
               striptags(teneoResponse.output.text)
             );
             // If the output parameter 'twilio_endcall' exists, the call will be ended
             response = twiml.hangup();
           } else {
-            console.log("Custom vocab: " + teneoResponse.output.parameters.twilio_customVocabulary);
+            console.log(
+              "Custom vocab: " +
+                teneoResponse.output.parameters.twilio_customVocabulary
+            );
             var textToSay = teneoResponse.output.text;
             if (teneoResponse.output.parameters.twilio_customOutput)
               // If the output parameter 'twilio_customOutput' exists, read this instead of output text
@@ -168,29 +188,38 @@ var server = http
             textToSay = striptags(textToSay);
 
             pusher.trigger("ivr", "teneo_answer", {
-              message: textToSay
+              message: textToSay,
             });
 
             response.say(
               {
-                voice: language_TTS
+                voice: language_TTS,
               },
               textToSay
             );
           }
 
           console.log(chalk.yellow("Caller ID: " + callId));
-          if (textToSend) console.log(chalk.green("Captured Input: " + textToSend));
-          if (teneoResponse.output.text) console.log(chalk.blue("Spoken Output: " + textToSay));
+          if (textToSend)
+            console.log(chalk.green("Captured Input: " + textToSend));
+          if (teneoResponse.output.text)
+            console.log(chalk.blue("Spoken Output: " + textToSay));
 
           res.writeHead(200, { "Content-Type": "text/xml" });
           res.end(twiml.toString());
         })
-        .catch(function(e) {
+        .catch(function (e) {
           console.log(e); // "oh, no!"
         });
     });
   })
   .listen(port);
 
-console.log(chalk.bold("Twilio will send messages to this server on: " + WEBHOOK_FOR_TWILIO + ":" + port));
+console.log(
+  chalk.bold(
+    "Twilio will send messages to this server on: " +
+      WEBHOOK_FOR_TWILIO +
+      ":" +
+      port
+  )
+);
