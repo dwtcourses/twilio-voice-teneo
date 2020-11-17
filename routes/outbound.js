@@ -1,4 +1,5 @@
 require("dotenv").config();
+const phone = require("phone");
 var express = require("express");
 const VoiceResponse = require("twilio").twiml.VoiceResponse;
 var router = express.Router();
@@ -18,11 +19,11 @@ router.post("/", function (request, response, next) {
     "http://" +
     request.headers.host +
     "/outbound/" +
-    encodeURIComponent(supportNumber);
+    encodeURIComponent(phone(supportNumber, "USA"));
 
   var options = {
-    to: request.body.phoneNumber,
-    from: twilioNumber,
+    to: phone(request.body.phoneNumber, "USA"),
+    from: phone(twilioNumber, "USA"),
     url: url,
   };
 
@@ -50,7 +51,7 @@ router.post("/:supportNumber", function (request, response) {
 
   twimlResponse.say(
     "Thanks for contacting our support team. Our " +
-      "next available representative will take your call. ",
+      "next available representative will take your call. Please hold.",
     { voice: "alice" }
   );
 
