@@ -19,11 +19,11 @@ router.post("/", function (request, response, next) {
     "http://" +
     request.headers.host +
     "/outbound/" +
-    encodeURIComponent(phone(supportNumber, "USA"));
+    encodeURIComponent(phone(supportNumber, "USA")[0]);
 
   var options = {
-    to: phone(request.body.phoneNumber, "USA"),
-    from: phone(twilioNumber, "USA"),
+    to: phone(request.body.phoneNumber, "USA")[0],
+    from: phone(twilioNumber, "USA")[0],
     url: url,
   };
 
